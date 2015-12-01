@@ -1,0 +1,14 @@
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+</head>
+<body>
+<div id="container"></div>
+<script>
+    d3.json('/corpora', function(error, data) {
+        if (error) return console.warn(error);
+        d3.select('#container').text(JSON.stringify(data));
+    });
+</script>
+</body>
+</html>
