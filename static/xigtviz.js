@@ -23,6 +23,10 @@ function escapeId(id) {
     else return escapeIdChars(id);
 }
 
+function getattr(obj, attr) {
+    return (obj.attributes || {})[attr];
+}
+
 function selectItem(igt, itemId) {
     return d3.select(igt).select("[data-id=\"" + itemId + "\"]");
 }
@@ -88,8 +92,9 @@ function resolveAlignmentExpression(igt, alex) {
 
 function highlightReferents(igt, d, direct) {
     (settings.reference_attributes || []).forEach(function(refAttr) {
-        if (d.attributes[refAttr] == null) return;
-        aeSpans = alignmentExpressionSpans(d.attributes[refAttr]);
+        refAttr = refAttr.name;
+        if (getattr(d, refAttr) == null) return;
+        aeSpans = alignmentExpressionSpans(getattr(d, refAttr));
         if (aeSpans == null) return;
         var spans = {};
         aeSpans.forEach(function(term) {
@@ -128,7 +133,7 @@ function applySpans(igt, itemId, spans, spanclass, direct) {
                 var s = "";
                 if (c > 0 && !spanOn) {
                     spanOn = true;
-                    s = "<span class=\"" + spanclass + "\">";
+                    s = "<span class=\"refattr-" + spanclass + "\">";
                 } else if (c == 0 && spanOn) {
                     spanOn = false;
                     s = "</span>";
@@ -167,13 +172,15 @@ function getItemContent(igt, itemId) {
     var content;
     if (itemData.text !== undefined)
         content = itemData.text;
-    else if (itemData.attributes.content !== undefined)
-        content = resolveAlignmentExpression(igt, itemData.attributes.content);
-    else if (itemData.attributes.segmentation !== undefined)
-        content = resolveAlignmentExpression(igt, itemData.attributes.segmentation);
+    else if (getattr(itemData, "content") !== undefined)
+        content = resolveAlignmentExpression(igt, getattr(itemData, "content"));
+    else if (getattr(itemData, "segmentation") !== undefined)
+        content = resolveAlignmentExpression(igt, getattr(itemData, "segmentation"));
     // last resort, get the displayed text (is this a good idea?)
     else
         content = item.text();
+        // if still nothing, go with default
+        if (!content) content = settings.default_content || "";
     itemData._cache.text = content;  // needs to be invalidated if it changes
     return content;
 }
@@ -315,7 +322,7 @@ function makeItemCol(item, tier) {
         "ids": [item.id],  // ids of all contained children (if any)
         "tierId": tier.id,
         "tierIds": [tier.id],  // tier ids of all contained children
-        "algnexpr": item.attributes.alignment || item.attributes.segmentation
+        "algnexpr": getattr(item, "alignment") || getattr(item, "segmentation")
     };
 }
 
@@ -379,7 +386,7 @@ function interlinearizeTier(t, tg) {
 }
 
 function interlinearizable(t, tg) {
-    var tgt = t.attributes.alignment || t.attributes.segmentation;
+    var tgt = getattr(t, "alignment") || getattr(t, "segmentation");
     return (
         t.class == "interlinear" &&
         tg &&
@@ -500,4 +507,14 @@ function igtLayout(elemId, igtData) {
         .each(function(d) { d._cache = {}; })  // cache is used for highlighting
         .on("mouseover", function(d) { highlightReferents(elemId, d, true); })
         .on("mouseout", function(d) { dehighlightReferents(elemId); });
+    if (settings.show_legend) {
+        var legend = igt.append("div")
+            .classed("xigtviz-legend", true)
+            .text("Key:");
+        legend.selectAll("div")
+            .data(settings.reference_attributes || [])
+          .enter().append("div")
+            .attr("class", function(d) { return "refattr-" + d.name; })
+            .text(function(d) { return d.name});
+    }
 }

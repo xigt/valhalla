@@ -1,10 +1,11 @@
 nav {
     display: inline-block;
+    /* position: absolute; */
     float: left;
     width: 200px;
-    height: 100%;
+    height: 98%;
+    overflow: auto;
     background-color: #EEF;
-    overflow: scroll;
 }
 
 nav > ul {
@@ -17,7 +18,10 @@ nav > ul ul {
     list-style-type: circle;
 }
 
-nav li:hover {
+nav li span {
+    display: block;
+}
+nav li span:hover, ul.igtNav li:hover {
     background-color: #44A;
     color: #FFF;
     font-weight: bold;

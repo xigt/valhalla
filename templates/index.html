@@ -26,23 +26,33 @@
     function refreshCorpusNav() {
       d3.json("{{ dbserver }}/corpora", function(error, data) {
         if (error) return console.warn(error);
-        d3.select("#corpusList").selectAll("li")
+        var lis = d3.select("#corpusList").selectAll("li")
             .data(data.corpora)
           .enter().append("li")
-            .text(function(d) { return d.name; })
-            .on("click", function(d) { return loadIgtNav(this, d.summary_url); })
-          .append("ul").classed("igtNav", true);
+            .on("click", function(d) { return loadIgtNav(this, d.summary_url); });
+        lis.append("span").text(function(d) { return d.name; });
+        lis.append("ul").classed("igtNav", true);
+
       });
     }
   </script>
   <link rel="stylesheet" type="text/css" href="/static/valhalla.css"/>
   <link rel="stylesheet" type="text/css" href="/static/xigtviz.css"/>
+  <style>
+    {% for refattr in settings.reference_attributes %}
+      {% if refattr.style %}
+      .refattr-{{ refattr.name }} { {{ refattr.style }} }
+      {% endif %}
+    {% endfor %}
+  </style>
 </head>
 <body>
 <nav id="navbar">
   <ul id="corpusList"></ul>
 </nav>
 <script>refreshCorpusNav()</script>
-<section><div id="igt"></div></section>
+<main>
+  <div id="igt"></div>
+</main>
 </body>
 </html>
